@@ -1,18 +1,18 @@
-package com.example.asyncsample.model
+package com.example.asyncsample.model.sources
 
 import android.content.Context
 import androidx.room.*
+import com.example.asyncsample.model.Comment
+import com.example.asyncsample.model.Post
+import com.example.asyncsample.model.User
 
 @Database(
     entities = [User::class, Post::class, Comment::class],
     version = 1
 )
 abstract class AppDatabase : RoomDatabase() {
-    abstract val myDao: MyDao
-}
 
-fun buildDb(context: Context): AppDatabase {
-    return Room.databaseBuilder(context, AppDatabase::class.java, "db").build()
+    abstract fun myDao(): MyDao
 }
 
 // TODO

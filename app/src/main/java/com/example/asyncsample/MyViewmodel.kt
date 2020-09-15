@@ -4,6 +4,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.asyncsample.AsyncOption.*
+import com.example.asyncsample.model.sources.Repository
+import javax.inject.Inject
 
 enum class AsyncOption {
     RXJAVA,
@@ -11,7 +13,7 @@ enum class AsyncOption {
     FLOW
 }
 
-class MyViewmodel : ViewModel() {
+class MyViewmodel @Inject constructor(private val repo: Repository) : ViewModel() {
     private val _chosenAsyncOption = MutableLiveData(RXJAVA)
     val chosenAsyncOption: LiveData<AsyncOption> = _chosenAsyncOption
 

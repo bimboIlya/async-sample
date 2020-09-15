@@ -1,7 +1,9 @@
-package com.example.asyncsample.model
+package com.example.asyncsample.model.sources
 
+import com.example.asyncsample.model.Comment
+import com.example.asyncsample.model.Post
+import com.example.asyncsample.model.User
 import io.reactivex.Observable
-import io.reactivex.Single
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory
@@ -30,14 +32,4 @@ interface ApiService {
 
     @GET("posts/{postId}/comments")
     fun getCommentsByPostIdRx(@Path("postId") postId: Long): Observable<List<Comment>>
-}
-
-fun getService(): ApiService {
-    val retrofit = Retrofit.Builder()
-        .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-        .addConverterFactory(GsonConverterFactory.create())
-        .baseUrl(BASE_URL)
-        .build()
-
-    return retrofit.create(ApiService::class.java)
 }

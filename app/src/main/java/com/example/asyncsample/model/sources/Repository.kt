@@ -1,8 +1,13 @@
-package com.example.asyncsample.model
+package com.example.asyncsample.model.sources
 
+import com.example.asyncsample.model.Comment
+import com.example.asyncsample.model.Post
 import io.reactivex.Observable
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class Repository(
+@Singleton
+class Repository @Inject constructor(
     val api: ApiService,
     val dao: MyDao
 ) {

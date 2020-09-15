@@ -4,25 +4,33 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Toast
 import androidx.activity.viewModels
 
 import com.example.asyncsample.AsyncOption.*
+import com.example.asyncsample.databinding.ActivityMainBinding
+import com.example.asyncsample.di.Injectable
+import com.example.asyncsample.di.ViewModelFactory
+import javax.inject.Inject
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), Injectable {
 
-    private val viewmodel by viewModels<MyViewmodel>()
+    lateinit var binding: ActivityMainBinding
+
+    @Inject lateinit var vmFactory: ViewModelFactory
+    private val viewmodel by viewModels<MyViewmodel>{ vmFactory }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         observeUi()
     }
 
     private fun observeUi() {
         viewmodel.chosenAsyncOption.observe(this,
-            { Toast.makeText(this, it.toString(), Toast.LENGTH_SHORT).show() })
+            { binding.textView.text = it.toString() })
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
