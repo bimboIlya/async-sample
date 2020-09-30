@@ -3,4 +3,9 @@
     <string name="rxjava">RxJava</string>
     <string name="coroutines">Coroutines</string>
     <string name="flow">Flow</string>
+    <string name="load">Download</string>
+    <string name="channels">Channels</string>
+    <string name="users">Users</string>
+    <string name="posts">Posts</string>
+    <string name="comments">Comments</string>
 </resources>

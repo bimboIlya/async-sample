@@ -1,7 +1,10 @@
 package com.example.asyncsample.model
 
+import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.Relation
+import com.google.gson.annotations.SerializedName
 
 @Entity
 data class User(
@@ -9,10 +12,10 @@ data class User(
     val name: String,
     val username: String,
     val email: String,
-//    val address: Address,
-//    val phone : String,
-//    val website : String,
-//    val company : Company
+    @Embedded val address: Address,
+    val phone : String,
+    val website : String,
+    @Embedded val company : Company
 )
 
 data class Address (
@@ -20,7 +23,7 @@ data class Address (
     val suite : String,
     val city : String,
     val zipcode : String,
-    val geo : Geo
+    @Embedded val geo : Geo
 )
 
 data class Geo (
@@ -29,7 +32,7 @@ data class Geo (
 )
 
 data class Company (
-    val name : String,
+    @SerializedName("name") val companyName : String,
     val catchPhrase : String,
     val bs : String
 )
@@ -49,4 +52,32 @@ data class Comment(
     val name: String,
     val email: String,
     val body: String,
+)
+
+data class UserWithPosts(
+    @Embedded val user: User,
+    @Relation(
+        parentColumn = "userId",
+        entityColumn = "id"
+    )
+    val posts: List<Post>
+)
+
+data class PostsWithComments(
+    @Embedded val post: Post,
+    @Relation(
+        parentColumn = "postId",
+        entityColumn = "id"
+    )
+    val comments: List<Comment>
+)
+
+data class UsersWithPostsWithComments(
+    @Embedded val user: User,
+    @Relation(
+        entity = Post::class,
+        parentColumn = "userId",
+        entityColumn = "id"
+    )
+    val posts: List<PostsWithComments>
 )

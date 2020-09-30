@@ -20,5 +20,4 @@ class MyApplication : Application(), HasAndroidInjector {
     }
 
     override fun androidInjector(): AndroidInjector<Any> = androidInjector
-
 }

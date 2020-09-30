@@ -1,36 +1,54 @@
 package com.example.asyncsample
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.activity.viewModels
-
+import androidx.appcompat.app.AppCompatActivity
 import com.example.asyncsample.AsyncOption.*
+import com.example.asyncsample.DataOption.*
 import com.example.asyncsample.databinding.ActivityMainBinding
 import com.example.asyncsample.di.Injectable
 import com.example.asyncsample.di.ViewModelFactory
+import com.google.android.material.snackbar.Snackbar
 import javax.inject.Inject
 
 class MainActivity : AppCompatActivity(), Injectable {
 
-    lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ActivityMainBinding
 
     @Inject lateinit var vmFactory: ViewModelFactory
-    private val viewmodel by viewModels<MyViewmodel>{ vmFactory }
+    private val myViewmodel by viewModels<MyViewmodel> { vmFactory }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        binding = ActivityMainBinding.inflate(layoutInflater).apply {
+            setContentView(root)
+            viewmodel = myViewmodel
+            lifecycleOwner = this@MainActivity
+        }
 
         observeUi()
     }
 
     private fun observeUi() {
-        viewmodel.chosenAsyncOption.observe(this,
-            { binding.textView.text = it.toString() })
+        myViewmodel.message.observe(this, {
+            it?.let {
+                Snackbar.make(binding.root, it, Snackbar.LENGTH_SHORT).show()
+                myViewmodel.messageShown()
+            }
+        })
+
+        myViewmodel.chosenDataOption.observe(this, {
+            it?.let {
+                when (it) {
+                    USER -> binding.usersButton.isChecked = true
+                    POST -> binding.postsButton.isChecked = true
+                    COMMENT -> binding.commentsButton.isChecked = true
+                }
+            }
+        })
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -40,9 +58,10 @@ class MainActivity : AppCompatActivity(), Injectable {
 
     override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
         super.onPrepareOptionsMenu(menu)
-        when (viewmodel.chosenAsyncOption.value) {
+        when (myViewmodel.chosenAsyncOption.value) {
             RXJAVA -> menu?.findItem(R.id.action_rx_java)?.isChecked = true
             COROUTINES -> menu?.findItem(R.id.action_coroutines)?.isChecked = true
+            CHANNELS -> menu?.findItem(R.id.action_channels)?.isChecked = true
             FLOW -> menu?.findItem(R.id.action_flow)?.isChecked = true
         }
         return true
@@ -52,17 +71,22 @@ class MainActivity : AppCompatActivity(), Injectable {
         when (item.itemId) {
             R.id.action_rx_java -> {
                 item.isChecked = !item.isChecked
-                viewmodel.setAsyncOption(RXJAVA)
+                myViewmodel.setAsyncOption(RXJAVA)
                 true
             }
             R.id.action_coroutines -> {
                 item.isChecked = !item.isChecked
-                viewmodel.setAsyncOption(COROUTINES)
+                myViewmodel.setAsyncOption(COROUTINES)
+                true
+            }
+            R.id.action_channels -> {
+                item.isChecked = !item.isChecked
+                myViewmodel.setAsyncOption(CHANNELS)
                 true
             }
             R.id.action_flow -> {
                 item.isChecked = !item.isChecked
-                viewmodel.setAsyncOption(FLOW)
+                myViewmodel.setAsyncOption(FLOW)
                 true
             }
 
