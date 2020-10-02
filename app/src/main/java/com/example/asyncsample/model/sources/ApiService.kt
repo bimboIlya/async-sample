@@ -7,6 +7,8 @@ import com.example.asyncsample.model.Post
 import com.example.asyncsample.model.User
 import com.google.gson.Gson
 import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import okhttp3.*
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -31,7 +33,6 @@ interface ApiService {
     suspend fun getCommentsByPostIdSus(@Path("postId") postId: Long): List<Comment>
 
 
-
     @GET("users")
     fun getAllUsersRx(): Observable<List<User>>
 
@@ -42,14 +43,31 @@ interface ApiService {
     fun getCommentsByPostIdRx(@Path("postId") postId: Long): Observable<List<Comment>>
 }
 
+// Retrofit doesn't allow functions without annotations inside service interface
+
+ suspend fun ApiService.getAllUsersFlow(): Flow<List<User>> = flow {
+    emit(getAllUsersSus())
+}
+
+ suspend fun ApiService.getPostsByUserIdFlow(userId: Long): Flow<List<Post>> = flow {
+    emit(getPostsByUserIdSus(userId))
+}
+
+ suspend fun ApiService.getCommentsByPostIdFlow(postId: Long): Flow<List<Comment>> = flow {
+    emit(getCommentsByPostIdSus(postId))
+}
+
 
 /**
  * Returns Response to Retrofit without accessing the Internet
  *
  * If BASE_URL is actual url, it will proceed unchanged, otherwise
- * it would get same files locally and synchronously
+ * it would get same files locally
  */
-class FakeNetworkInterceptor(private val application: Application) : Interceptor {
+class FakeNetworkInterceptor(
+    private val application: Application,
+    private val shouldLog: Boolean = false
+) : Interceptor {
     private val gson = Gson()
 
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -57,10 +75,8 @@ class FakeNetworkInterceptor(private val application: Application) : Interceptor
         logRequest(request)
 
         if (BASE_URL.contains("jsonplaceholder.typicode.com")) {
-            val response = chain.proceed(request)
-            logResponse(response)
-
-            return response
+            return chain.proceed(request)
+                .also { logResponse(it) }
         }
 
         if (!hasInternetConnection()) return makeErrorResponse("No Internet", request)
@@ -69,8 +85,9 @@ class FakeNetworkInterceptor(private val application: Application) : Interceptor
 
         val fileName = request
             .url()
+            .uri()
             .toString()
-            .drop(BASE_URL.length + 1)  // doesn't delete first '/' for some reason
+            .drop(BASE_URL.length + 1)  // client add '/' at the end of base url
             .replace('/', '-')
             .run {
                 return@run if (!endsWith(".json")) "$this.json" else this
@@ -128,7 +145,7 @@ class FakeNetworkInterceptor(private val application: Application) : Interceptor
         return activeNetwork?.isConnectedOrConnecting ?: false
     }
 
-    // DON'T ever log the body, otherwise it would be empty
+    // DON'T ever log response body, otherwise it would be empty
     private fun logResponse(response: Response) {
         with(response) {
             log("<-- ${code()} ${request().url()} ${message()}" +
@@ -143,7 +160,9 @@ class FakeNetworkInterceptor(private val application: Application) : Interceptor
     }
 
     private fun log(message: String) {
-        Timber.tag(LOG_TAG).i(message)
+        if (shouldLog) {
+            Timber.tag(LOG_TAG).i(message)
+        }
     }
 
 

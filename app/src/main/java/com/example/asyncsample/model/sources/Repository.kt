@@ -8,12 +8,12 @@ import io.reactivex.Observable
 import io.reactivex.Scheduler
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.*
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// for some reason, retrofit client works faster with RxJava than coroutines
+// retrofit client works faster with RxJava than with coroutines
 @Singleton
 @SuppressLint("CheckResult")  // subscriptions w/out reference get GC'ed on completion
 class Repository @Inject constructor(
@@ -22,6 +22,56 @@ class Repository @Inject constructor(
     private val schedulerIO: Scheduler,
     private val dispatcherIO: CoroutineDispatcher
 ) {
+
+    // -------------------- RxJava section --------------------
+
+    fun getUserStreamRx(): Observable<User> {
+        return api.getAllUsersRx()
+            .subscribeOn(schedulerIO)
+            .doOnNext { insertUsersRx(it) }
+            .flatMapIterable { it }
+    }
+
+    fun getPostStreamRx(): Observable<Post> {
+        return getUserStreamRx()
+            .subscribeOn(schedulerIO)
+            .flatMap {
+                api.getPostsByUserIdRx(it.id)
+                    .subscribeOn(schedulerIO)
+            }
+            .doOnNext { insertPostsRx(it) }
+            .flatMapIterable { it }
+    }
+
+    fun getCommentStreamRx(): Observable<Comment> {
+        return getPostStreamRx()
+            .subscribeOn(schedulerIO)
+            .flatMap {
+                api.getCommentsByPostIdRx(it.id)
+                    .subscribeOn(schedulerIO)
+            }
+            .doOnNext { insertCommentsRx(it) }
+            .flatMapIterable { it }
+    }
+
+    private fun insertUsersRx(users: List<User>) {
+        dao.insertUsersRx(users)
+            .subscribeOn(schedulerIO)
+            .subscribe()
+    }
+
+    private fun insertPostsRx(posts: List<Post>) {
+        dao.insertPostsRx(posts)
+            .subscribeOn(schedulerIO)
+            .subscribe()
+    }
+
+    private fun insertCommentsRx(comments: List<Comment>) {
+        dao.insertCommentsRx(comments)
+            .subscribeOn(schedulerIO)
+            .subscribe()
+    }
+
 
     // -------------------- Coroutines section --------------------
 
@@ -129,67 +179,35 @@ class Repository @Inject constructor(
 
     // -------------------- Flow section --------------------
 
+    // flow runs on a single coroutine
+    // network requests perform on the same thread on the same coroutine
+    // so when request is sent, coroutine suspends itself, once it gets response,
+    // it continues, sends next request and so on, so it takes a lot of time
+    // need to find a way to launch coroutine for every request
+    @FlowPreview
     suspend fun getUsersFlow(): Flow<User> {
-        TODO()
+        return api.getAllUsersFlow()
+            .onEach { dao.insertUsersSus(it) }
+            .flatMapConcat { it.asFlow() }
+            .flowOn(dispatcherIO)
     }
 
+    @FlowPreview
     suspend fun getPostsFlow(): Flow<Post> {
-        TODO()
+        return getUsersFlow()
+            .flatMapConcat { api.getPostsByUserIdFlow(it.id) }  // sync
+            .onEach { dao.insertPostsSus(it) }
+            .flatMapConcat { it.asFlow() }
+            .flowOn(dispatcherIO)
     }
 
-
+    @FlowPreview
     suspend fun getCommentsFlow(): Flow<Comment> {
-        TODO()
-    }
-
-
-    // -------------------- RxJava section --------------------
-
-       fun getUserStreamRx(): Observable<User> {
-        return api.getAllUsersRx()
-            .subscribeOn(schedulerIO)
-            .doOnNext { insertUsersRx(it) }
-            .flatMapIterable { it }
-    }
-
-    fun getPostStreamRx(): Observable<Post> {
-        return getUserStreamRx()
-            .subscribeOn(schedulerIO)
-            .flatMap {
-                api.getPostsByUserIdRx(it.id)
-                    .subscribeOn(schedulerIO)
-            }
-            .doOnNext { insertPostsRx(it) }
-            .flatMapIterable { it }
-    }
-
-    fun getCommentStreamRx(): Observable<Comment> {
-        return getPostStreamRx()
-            .subscribeOn(schedulerIO)
-            .flatMap {
-                api.getCommentsByPostIdRx(it.id)
-                    .subscribeOn(schedulerIO)
-            }
-            .doOnNext { insertCommentsRx(it) }
-            .flatMapIterable { it }
-    }
-
-    private fun insertUsersRx(users: List<User>) {
-        dao.insertUsersRx(users)
-            .subscribeOn(schedulerIO)
-            .subscribe()
-    }
-
-    private fun insertPostsRx(posts: List<Post>) {
-        dao.insertPostsRx(posts)
-            .subscribeOn(schedulerIO)
-            .subscribe()
-    }
-
-    private fun insertCommentsRx(comments: List<Comment>) {
-        dao.insertCommentsRx(comments)
-            .subscribeOn(schedulerIO)
-            .subscribe()
+        return getPostsFlow()
+            .flatMapConcat { api.getCommentsByPostIdFlow(it.id) }  // sync
+            .onEach { dao.insertCommentsSus(it) }
+            .flatMapConcat { it.asFlow() }
+            .flowOn(dispatcherIO)
     }
 }
 

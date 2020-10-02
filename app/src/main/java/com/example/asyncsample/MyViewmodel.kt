@@ -12,7 +12,12 @@ import com.example.asyncsample.util.subscribe
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -35,7 +40,7 @@ class MyViewmodel @Inject constructor(private val repo: Repository) : ViewModel(
     private val _chosenAsyncOption = MutableLiveData(RXJAVA)
     val chosenAsyncOption: LiveData<AsyncOption> = _chosenAsyncOption
 
-    private val _chosenDataOption = MutableLiveData(COMMENT)
+    private val _chosenDataOption = MutableLiveData(POST)
     val chosenDataOption: LiveData<DataOption> = _chosenDataOption
 
     private val _isLoading = MutableLiveData(false)
@@ -61,6 +66,9 @@ class MyViewmodel @Inject constructor(private val repo: Repository) : ViewModel(
         _chosenDataOption.postValue(option)
     }
 
+    fun messageShown() {
+        _message.value = null
+    }
 
     fun load() {
         when (chosenAsyncOption.value) {
@@ -87,6 +95,7 @@ class MyViewmodel @Inject constructor(private val repo: Repository) : ViewModel(
         }
     }
 
+
     private fun channels() {
         when (chosenDataOption.value!!) {
             USER -> { loadCoroutines(CHANNELS) { repo.getUsersSus() } }
@@ -95,12 +104,11 @@ class MyViewmodel @Inject constructor(private val repo: Repository) : ViewModel(
         }
     }
 
-
-    private fun flow() { // todo
+    private fun flow() {
         when (chosenDataOption.value!!) {
-            USER -> {  }
-            POST -> {  }
-            COMMENT -> {  }
+            USER -> { loadFlow { repo.getUsersFlow() } }
+            POST -> { loadFlow { repo.getPostsFlow() } }
+            COMMENT -> { loadFlow { repo.getCommentsFlow() } }
         }
     }
 
@@ -129,10 +137,20 @@ class MyViewmodel @Inject constructor(private val repo: Repository) : ViewModel(
     }
 
     private fun <T : Any> loadFlow(func: suspend () -> Flow<T>) {
-        TODO()
+        viewModelScope.launch {
+            val result = func()
+                .onStart { onLoadingStarted() }
+                .catch {
+                    onLoadingFailed(it)
+                    cancel()
+                }
+                .toList()
+
+            if (isActive) onLoadingSuccess(FLOW, result)
+        }
     }
 
-    private fun logDownloadedData(
+    private fun displayDownloadedData(
         option: AsyncOption,
         className: String,
         amount: Int,
@@ -155,7 +173,7 @@ class MyViewmodel @Inject constructor(private val repo: Repository) : ViewModel(
     private fun <T : Any> onLoadingSuccess(option: AsyncOption, data: List<T>) {
         onLoadingStopped()
         if (!data.isNullOrEmpty()) {
-            logDownloadedData(
+            displayDownloadedData(
                 option,
                 data.first()::class.java.simpleName,
                 data.size,
@@ -170,10 +188,6 @@ class MyViewmodel @Inject constructor(private val repo: Repository) : ViewModel(
         onLoadingStopped()
         _message.value = "eror"
         Timber.d(t)
-    }
-
-    fun messageShown() {
-        _message.value = null
     }
 
     override fun onCleared() {

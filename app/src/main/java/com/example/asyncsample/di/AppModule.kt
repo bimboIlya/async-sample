@@ -7,7 +7,6 @@ import dagger.Module
 import dagger.Provides
 import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.Dispatchers
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
@@ -20,7 +19,13 @@ object AppModule {
 
     @Singleton
     @Provides
-    fun getService(client: OkHttpClient): ApiService {
+    fun getService(application: Application): ApiService {
+        val interceptor = FakeNetworkInterceptor(application, shouldLog = true)
+
+        val client = OkHttpClient.Builder()
+            .addInterceptor(interceptor)
+            .build()
+
         val retrofit = Retrofit.Builder()
             .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
             .addConverterFactory(GsonConverterFactory.create())
@@ -29,20 +34,6 @@ object AppModule {
             .build()
 
         return retrofit.create(ApiService::class.java)
-    }
-
-    @Singleton
-    @Provides
-    fun getClient(interceptor: Interceptor): OkHttpClient {
-        return OkHttpClient.Builder()
-            .addInterceptor(interceptor)
-            .build()
-    }
-
-    @Singleton
-    @Provides
-    fun getInterceptor(application: Application): Interceptor {
-        return FakeNetworkInterceptor(application)
     }
 
     @Singleton

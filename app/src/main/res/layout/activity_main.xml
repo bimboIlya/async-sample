@@ -49,14 +49,13 @@
             android:onClick="@{() -> viewmodel.load()}"
             android:text="@string/load"
             app:cornerRadius="40dp"
-            android:textColor="#000000"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent" />
 
         <com.google.android.material.button.MaterialButtonToggleGroup
             android:id="@+id/button_group"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -66,26 +65,29 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/users_button"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:onClick="@{() -> viewmodel.setDataOption(DataOption.USER)}"
-                android:text="@string/users" />
+                android:text="@string/users"
+                android:layout_weight="10" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/posts_button"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:onClick="@{() -> viewmodel.setDataOption(DataOption.POST)}"
-                android:text="@string/posts" />
+                android:text="@string/posts"
+                android:layout_weight="9" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/comments_button"
                 style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:onClick="@{() -> viewmodel.setDataOption(DataOption.COMMENT)}"
-                android:text="@string/comments" />
+                android:text="@string/comments"
+                android:layout_weight="10" />
 
         </com.google.android.material.button.MaterialButtonToggleGroup>
 
