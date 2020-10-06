@@ -57,8 +57,8 @@ data class Comment(
 data class UserWithPosts(
     @Embedded val user: User,
     @Relation(
-        parentColumn = "userId",
-        entityColumn = "id"
+        parentColumn = "id",
+        entityColumn = "userId"
     )
     val posts: List<Post>
 )
@@ -66,8 +66,8 @@ data class UserWithPosts(
 data class PostsWithComments(
     @Embedded val post: Post,
     @Relation(
-        parentColumn = "postId",
-        entityColumn = "id"
+        parentColumn = "id",
+        entityColumn = "postId"
     )
     val comments: List<Comment>
 )
@@ -76,8 +76,8 @@ data class UsersWithPostsWithComments(
     @Embedded val user: User,
     @Relation(
         entity = Post::class,
-        parentColumn = "userId",
-        entityColumn = "id"
+        parentColumn = "id",
+        entityColumn = "userId"
     )
     val posts: List<PostsWithComments>
 )

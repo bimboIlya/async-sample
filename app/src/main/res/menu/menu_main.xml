@@ -18,5 +18,9 @@
             android:id="@+id/action_flow"
             android:title="@string/flow" />
 
+        <item
+            android:id="@+id/action_db"
+            android:title="@string/database" />
+
     </group>
 </menu>

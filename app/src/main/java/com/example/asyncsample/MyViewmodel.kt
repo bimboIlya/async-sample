@@ -26,7 +26,8 @@ enum class AsyncOption {
     RXJAVA,
     COROUTINES,
     CHANNELS,
-    FLOW
+    FLOW,
+    DATABASE
 }
 
 enum class DataOption {
@@ -76,6 +77,7 @@ class MyViewmodel @Inject constructor(private val repo: Repository) : ViewModel(
             COROUTINES -> { coroutines() }
             CHANNELS -> { channels() }
             FLOW -> { flow() }
+            DATABASE -> { db() }
         }
     }
 
@@ -95,7 +97,6 @@ class MyViewmodel @Inject constructor(private val repo: Repository) : ViewModel(
         }
     }
 
-
     private fun channels() {
         when (chosenDataOption.value!!) {
             USER -> { loadCoroutines(CHANNELS) { repo.getUsersSus() } }
@@ -109,6 +110,14 @@ class MyViewmodel @Inject constructor(private val repo: Repository) : ViewModel(
             USER -> { loadFlow { repo.getUsersFlow() } }
             POST -> { loadFlow { repo.getPostsFlow() } }
             COMMENT -> { loadFlow { repo.getCommentsFlow() } }
+        }
+    }
+
+    private fun db() {
+        when (chosenDataOption.value!!) {
+            USER -> { loadCoroutines(DATABASE) { repo.getUsersDb() } }
+            POST -> { loadCoroutines(DATABASE) { repo.getPostsDb() } }
+            COMMENT -> { loadCoroutines(DATABASE) { repo.getCommentsDb() } }
         }
     }
 

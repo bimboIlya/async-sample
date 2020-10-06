@@ -3,6 +3,7 @@ package com.example.asyncsample.di
 import android.app.Application
 import androidx.room.Room
 import com.example.asyncsample.model.sources.*
+import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import io.reactivex.schedulers.Schedulers
@@ -14,7 +15,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 
-@Module
+@Module(includes = [AppBindings::class])
 object AppModule {
 
     @Singleton
@@ -57,4 +58,12 @@ object AppModule {
     @Singleton
     @Provides
     fun getDispatchersIO() = Dispatchers.IO
+}
+
+@Module
+abstract class AppBindings {
+
+    @Singleton
+    @Binds
+    abstract fun bindRepository(repo: RepositoryImpl): Repository
 }

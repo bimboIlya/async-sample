@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity(), Injectable {
             COROUTINES -> menu?.findItem(R.id.action_coroutines)?.isChecked = true
             CHANNELS -> menu?.findItem(R.id.action_channels)?.isChecked = true
             FLOW -> menu?.findItem(R.id.action_flow)?.isChecked = true
+            DATABASE -> menu?.findItem(R.id.action_db)?.isChecked = true
         }
         return true
     }
@@ -87,6 +88,11 @@ class MainActivity : AppCompatActivity(), Injectable {
             R.id.action_flow -> {
                 item.isChecked = !item.isChecked
                 myViewmodel.setAsyncOption(FLOW)
+                true
+            }
+            R.id.action_db -> {
+                item.isChecked = !item.isChecked
+                myViewmodel.setAsyncOption(DATABASE)
                 true
             }
 
